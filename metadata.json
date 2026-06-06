@@ -1,0 +1,6 @@
+{
+  "name": "PTS Slide Deck Builder",
+  "description": "Strategic customizable pitch-deck for Private University enrollment growth, featuring Sandbox evaluation and Student Micro-Agencies.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
