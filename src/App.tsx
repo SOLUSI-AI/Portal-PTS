@@ -1563,7 +1563,7 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
       </AnimatePresence>
 
       {/* FLOATING GEMINI/FIREWORKS CHATBOT COMPONENT */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end">
         
         {/* Chat window panel */}
         <AnimatePresence>
@@ -1573,7 +1573,7 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.25 }}
-              className="w-[320px] sm:w-[380px] h-[480px] bg-[#0c0c14]/95 backdrop-blur-xl border border-zinc-850 rounded-3xl shadow-2xl flex flex-col overflow-hidden mb-4 mr-0 md:mr-2 text-left"
+              className="w-[calc(100vw-2rem)] sm:w-[380px] h-[65vh] sm:h-[480px] max-h-[600px] min-h-[350px] bg-[#0c0c14]/95 backdrop-blur-xl border border-zinc-850 rounded-3xl shadow-2xl flex flex-col overflow-hidden mb-3 sm:mb-4 mr-0 md:mr-2 text-left"
             >
               {/* Chat Header */}
               <div className="p-4 bg-[#090910] border-b border-zinc-850/80 flex justify-between items-center shrink-0">
@@ -1650,7 +1650,7 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-[12px] leading-relaxed font-normal whitespace-pre-line ${
+                      className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-[12.5px] sm:text-[13px] leading-relaxed font-normal whitespace-pre-line ${
                         msg.role === 'user'
                           ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-br-none shadow-md'
                           : 'bg-[#12121e]/85 border border-zinc-850/80 text-slate-200 rounded-bl-none shadow-sm'
@@ -1743,7 +1743,7 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
         <button
           id="btn-bot-floating-bubble"
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className="p-4 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 group border border-indigo-400/25 cursor-pointer relative"
+          className="p-3.5 sm:p-4 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 group border border-indigo-400/25 cursor-pointer relative"
           aria-label="Buka obrolan asisten AI"
         >
           <div className="relative">
