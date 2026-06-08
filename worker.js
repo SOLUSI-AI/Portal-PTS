@@ -36,7 +36,7 @@ Date: 2026-06-04
 		- Memungkinkan lulus S1 dalam 3 tahun bagi peserta yang mengumpulkan cukup modul sebelum masuk.
 		  
 		  **Masa Kedaluwarsa Kredit:**
-		- Pengakuan SKS dari modul bridging berlaku maksimal 2 tahun setelah kelulusan SMA.
+		- Pengakuan SKS dari modul bridging berlaku maksimal 2 years setelah kelulusan SMA.
 		- Jika peserta menunda kuliah lebih lama, kampus dapat mensyaratkan asesmen ulang atau modul penyegar singkat agar kompetensi tetap relevan dengan perkembangan AI dan kurikulum terbaru.
 - ### 3.3 Model Biaya & Insentif
 	- Harga modul dibuat sangat terjangkau, misalnya:
@@ -59,7 +59,7 @@ Date: 2026-06-04
 		- Mereka sudah punya "tabungan SKS" dan pengalaman positif dengan dosen/ekosistem UKWMS.
 	- Membuat UKWMS tampil sebagai:
 		- Kampus futuristik tapi pragmatis: fokus pada percepatan studi dan efisiensi biaya, bukan gimmick visual.
-- ## 6. Risiko & Pertanyaan Terbuka
+- ## 6. Risks & Pertanyaan Terbuka
 	- Penyesuaian detail dengan regulasi RPL dan kebijakan internal UKWMS.
 	- Kapasitas dosen & admin untuk mengelola cohort bridging yang bisa sangat tersebar (online, lintas daerah).
 	- Kontrol kualitas penilaian dan ujian untuk memastikan peserta layak menerima pengakuan SKS.
@@ -225,7 +225,7 @@ Date: 2026-06-04
 		- Usaha mikro milik ibu/kerabat.
 		- UMKM perempuan di sekitar.
 		  
-		  Mereka:
+		  They:
 			- Diajari menganalisis cashflow dan kesehatan usaha menggunakan tool analitik berbasis Invezthink.
 			- Menyusun rekomendasi praktis.
 			  
@@ -474,92 +474,89 @@ Date: 2026-06-04
 	- Desain dan pengawasan micro-grant agar tidak disalahgunakan.
 	- Kebutuhan panduan jelas bagi dosen tentang batasan aktivitas yang menyentuh instrumen keuangan formal dan spekulatif.
 	- Ketersediaan mentor bisnis untuk mendampingi kelompok mahasiswa.
-
----
-
-`;
+---`;
 
 const SYSTEM_PROMPT = `Kamu adalah asisten resmi untuk Voxia AI Consultant Campus. Tugas utamamu adalah menjelaskan berbagai program unggulan dan inovasi kampus kepada audiens.
 Berikut adalah dokumen lengkap Pustaka Data / Rencana Program Voxia:
 
-${KNOWLEDGE_BASE}
+` + KNOWLEDGE_BASE + `
 
 Aturan Menjawab:
 1. Jawab HANYA berdasarkan dokumen Pustaka Data di atas.
 2. Jawab dengan nada yang optimis, profesional, inovatif, dan mudah dipahami.
 3. Jika ditanya hal yang sama sekali tidak ada di dokumen, katakan 'Maaf, saya tidak memiliki informasi tersebut saat ini.'`;
 
-export default {                                                                                                                                                                       
-      async fetch(request, env) {                                                                                                                                                          
-        const corsHeaders = {                                                                                                                                                              
-          "Access-Control-Allow-Origin": "*",                                                                                                                                              
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",                                                                                                                            
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",                                                                                                                   
-        };                                                                                                                                                                                 
-                                                                                                                                                                                           
-        if (request.method === "OPTIONS") {                                                                                                                                                
-          return new Response(null, { headers: corsHeaders });                                                                                                                             
-        }                                                                                                                                                                                  
-                                                                                                                                                                                           
-        const rawKey = env.FIREWORKS_API_KEY || "";                                                                                                                                        
-        const cleanKey = rawKey.replace(/^["']|["']$/g, '').trim();                                                                                                                        
-                                                                                                                                                                                           
-        if (request.method === "GET") {                                                                                                                                                    
-          const isKeySet = cleanKey ? "TERBACA & DIBERSIHKAN" : "KOSONG / UNDEFINED";                                                                                                      
-          const keyPreview = cleanKey ? cleanKey.substring(0, 5) : "NONE";                                                                                                                 
-                                                                                                                                                                                           
-          return new Response(`VOXIA Secure Proxy is Active. Live in Peace!\nAPI Key Status: ${isKeySet}\nAwalan: ${keyPreview}`, {                                                        
-            headers: { "Content-Type": "text/plain", ...corsHeaders }                                                                                                                      
-          });                                                                                                                                                                              
-        }                                                                                                                                                                                  
-                                                                                                                                                                                           
-        if (request.method === "POST") {                                                                                                                                                   
-          try {                                                                                                                                                                            
-            const body = await request.json();                                                                                                                                             
-            
-            // 2. MENGGABUNGKAN SYSTEM PROMPT DENGAN PERTANYAAN USER
-            const messagesWithSystem = [
-              { role: "system", content: SYSTEM_PROMPT },
-              ...(body.messages || [])
-            ];
-                                                                                                                                                                                           
-            const fireworksResponse = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {                                                                              
-              method: "POST",                                                                                                                                                              
-              headers: {                                                                                                                                                                   
-                "Content-Type": "application/json",                                                                                                                                        
-                "Authorization": `Bearer ${cleanKey}`                                                                                                                                      
-              },                                                                                                                                                                           
-              body: JSON.stringify({                                                                                                                                                       
-                // MENGGUNAKAN MODEL GENERASI TERBARU YANG AKTIF DI FIREWORKS SAAT INI                                                                                                     
-                model: "accounts/fireworks/models/deepseek-v4-flash",                                                                                                                      
-                messages: messagesWithSystem,
-                max_tokens: 1000,
-                // DIREVISI: Temperature diturunkan jadi 0.3 agar AI konsisten baca data dan tidak ngarang bebas
-                temperature: 0.3
-              })
-            });
-  
-            if (!fireworksResponse.ok) {
-              const errText = await fireworksResponse.text();
-              return new Response(JSON.stringify({ error: `Fireworks API Error: ${errText}` }), {
-                status: fireworksResponse.status,
-                headers: { "Content-Type": "application/json", ...corsHeaders }
-              });
-            }
-  
-            const data = await fireworksResponse.json();
-            return new Response(JSON.stringify(data), {
-              headers: { "Content-Type": "application/json", ...corsHeaders }
-            });
-  
-          } catch (err) {
-            return new Response(JSON.stringify({ error: err.message }), {
-              status: 500,
-              headers: { "Content-Type": "application/json", ...corsHeaders }
-            });
-          }
+export default {
+  async fetch(request, env) {
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    const rawKey = env.FIREWORKS_API_KEY || "";
+    const cleanKey = rawKey.replace(/^["']|["']$/g, '').trim();
+
+    if (request.method === "GET") {
+      const isKeySet = cleanKey ? "TERBACA & DIBERSIHKAN" : "KOSONG / UNDEFINED";
+      const keyPreview = cleanKey ? cleanKey.substring(0, 5) : "NONE";
+
+      return new Response(`VOXIA Secure Proxy is Active. Live in Peace!\nAPI Key Status: ${isKeySet}\nAwalan: ${keyPreview}`, {
+        headers: { "Content-Type": "text/plain", ...corsHeaders }
+      });
+    }
+
+    if (request.method === "POST") {
+      try {
+        const body = await request.json();
+
+        // 2. MENGGABUNGKAN SYSTEM PROMPT DENGAN PERTANYAAN USER
+        const messagesWithSystem = [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...(body.messages || [])
+        ];
+
+        const fireworksResponse = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${cleanKey}`
+          },
+          body: JSON.stringify({
+            // MENGGUNAKAN MODEL GENERASI TERBARU YANG AKTIF DI FIREWORKS SAAT INI
+            model: "accounts/fireworks/models/deepseek-v4-flash",
+            messages: messagesWithSystem,
+            max_tokens: 1000,
+            // DIREVISI: Temperature diturunkan jadi 0.3 agar AI konsisten baca data dan tidak ngarang bebas
+            temperature: 0.3
+          })
+        });
+
+        if (!fireworksResponse.ok) {
+          const errText = await fireworksResponse.text();
+          return new Response(JSON.stringify({ error: `Fireworks API Error: ${errText}` }), {
+            status: fireworksResponse.status,
+            headers: { "Content-Type": "application/json", ...corsHeaders }
+          });
         }
-  
-        return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+
+        const data = await fireworksResponse.json();
+        return new Response(JSON.stringify(data), {
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
       }
     }
+
+    return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+  }
+};
