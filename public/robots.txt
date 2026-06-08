@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://voxia.qzz.io/sitemap.xml
