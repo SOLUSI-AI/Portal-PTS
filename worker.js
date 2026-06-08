@@ -1,7 +1,5 @@
 // 1. Injeksi Pustaka Data
 const KNOWLEDGE_BASE = `# Hybrid Nano-Degree & Bridging Program for SMA
-Version: v03  
-Date: 2026-06-04
 - ## 1. Latar Belakang
 	- Gen Z tidak nyaman dengan komitmen 4 tahun tanpa kepastian outcome.
 	- Tren global: micro-credentials dan stackable nano-degrees yang dapat diakui sebagai bagian dari gelar penuh.
@@ -67,8 +65,6 @@ Date: 2026-06-04
 ---
 
 # Corporate-Bonded Scholarship as Alternative to PAYE/ISA
-Version: v03  
-Date: 2026-06-04
 - ## 1. Latar Belakang
 	- Biaya awal kuliah sering menjadi penghalang utama masuk perguruan tinggi, khususnya di keluarga berpenghasilan menengah ke bawah.
 	- Secara global, **Income Share Agreements (ISAs)** dipromosikan sebagai instrumen pembiayaan inovatif untuk menutup gap pembiayaan pendidikan, namun juga menuai banyak perhatian terkait regulasi, perlindungan mahasiswa, dan risiko gagal bayar.
@@ -145,8 +141,6 @@ Date: 2026-06-04
 ---
 
 # Green Ledger Campus: AI-Backed Environmental CSR (Supporting Program)
-Version: v03  
-Date: 2026-06-04
 - ## 1. Latar Belakang
 	- Gen Z sangat peduli terhadap isu iklim dan keberlanjutan, namun pilihan kampus masih lebih banyak ditentukan oleh: biaya, prospek kerja, dan gengsi.
 	- UKWMS memiliki identitas etis dan sosial yang kuat, cocok untuk menggabungkan misi lingkungan dan teknologi.
@@ -197,8 +191,6 @@ Date: 2026-06-04
 ---
 
 # AI-Powered Women & Youth Financial Inclusivity Hub
-Version: v03  
-Date: 2026-06-04
 - ## 1. Latar Belakang
 	- Gen Z peduli isu keadilan, inklusivitas, dan keberlanjutan.
 	- Perempuan muda dan ibu sering kali menjadi pengambil keputusan utama dalam pendidikan anak dan pengelolaan keuangan keluarga.
@@ -265,16 +257,14 @@ Date: 2026-06-04
 
 ---
 
-# Widya Mandala Student Ambassador System
-Version: v03  
-Date: 2026-06-04
+# Student Ambassador System
 - ## 1. Latar Belakang
 	- Peer-to-peer rekomendasi jauh lebih dipercaya Gen Z daripada iklan institusional.
 	- UKWMS punya ribuan mahasiswa aktif yang bisa menjadi "duta" organik jika diberikan sistem & pengakuan yang tepat.
 	- Sebagai kampus Katolik ternama, citra akademik dan integritas harus dijaga – pendekatan tidak boleh mirip skema komersial/MLM.
 - ## 2. Konsep Utama
   
-  Membangun **Widya Mandala Student Ambassador System**:
+  Membangun **Student Ambassador System**:
 	- Mahasiswa berperan sebagai:
 		- Duta edukasi dan informasi tentang UKWMS ke sekolah/komunitas.
 		- Fasilitator kegiatan sosialisasi (online/offline).
@@ -326,8 +316,6 @@ Date: 2026-06-04
 ---
 
 # AI-Driven Campus Micro-Agency for UMKM
-Version: v03  
-Date: 2026-06-04
 - ## 1. Latar Belakang
 	- Surabaya dan sekitarnya punya ribuan UMKM yang butuh digitalisasi, otomatisasi, dan dukungan pemasaran.
 	- Banyak mahasiswa baru baru "merasakan dunia kerja" di semester akhir; terlalu lambat untuk Gen Z yang ingin cepat produktif.
@@ -404,8 +392,6 @@ Date: 2026-06-04
 ---
 
 # Financial Literacy & Entrepreneur Track
-Version: v03  
-Date: 2026-06-04
 - ## 1. Latar Belakang
 	- Kekhawatiran utama orang tua: "Kuliah mahal, lulus kerja apa?" dan "apakah anak saya bisa mandiri finansial?".
 	- Gen Z ingin cepat belajar investasi, bisnis digital, dan cara mengelola uang sendiri, bukan cuma teori.
@@ -484,7 +470,8 @@ Berikut adalah dokumen lengkap Pustaka Data / Rencana Program Voxia:
 Aturan Menjawab:
 1. Jawab HANYA berdasarkan dokumen Pustaka Data di atas.
 2. Jawab dengan nada yang optimis, profesional, inovatif, dan mudah dipahami.
-3. Jika ditanya hal yang sama sekali tidak ada di dokumen, katakan 'Maaf, saya tidak memiliki informasi tersebut saat ini.'`;
+3. Jika ditanya hal yang sama sekali tidak ada di dokumen, katakan 'Maaf, saya tidak memiliki informasi tersebut saat ini.'
+4. JANGAN PERNAH memberikan penawaran di luar dokumen, membuat pertanyaan retoris, atau menawarkan bantuan tambahan seperti membuat pitch deck/materi baru di akhir jawaban. Selesaikan jawabanmu langsung setelah poin terakhir selesai dijelaskan.`;
 
 export default {
   async fetch(request, env) {
@@ -530,7 +517,7 @@ export default {
             // MENGGUNAKAN MODEL GENERASI TERBARU YANG AKTIF DI FIREWORKS SAAT INI
             model: "accounts/fireworks/models/deepseek-v4-flash",
             messages: messagesWithSystem,
-            max_tokens: 1000,
+            max_tokens: 5000,
             // DIREVISI: Temperature diturunkan jadi 0.3 agar AI konsisten baca data dan tidak ngarang bebas
             temperature: 0.3
           })
