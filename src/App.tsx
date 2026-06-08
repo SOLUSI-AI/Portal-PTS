@@ -1650,7 +1650,21 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
                           : 'bg-[#12121e]/85 border border-zinc-850/80 text-slate-200 rounded-bl-none shadow-sm'
                       }`}
                     >
-                      {msg.content}
+                      {msg.role === 'user' ? (
+                        msg.content
+                      ) : (
+                        <div 
+                          className="markdown-content space-y-1"
+                          dangerouslySetInnerHTML={{
+                            __html: msg.content
+                              .replace(/^### (.*$)/gim, '<h3 class="text-[13px] sm:text-[14px] font-bold text-indigo-400 mt-4 mb-1">$1</h3>')
+                              .replace(/^## (.*$)/gim, '<h2 class="text-[14px] sm:text-[15px] font-bold text-indigo-400 mt-4 mb-1">$1</h2>')
+                              .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-indigo-300">$1</strong>')
+                              .replace(/\*(.*?)\*/g, '<em class="italic text-indigo-200">$1</em>')
+                              .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc py-0.5">$1</li>')
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
