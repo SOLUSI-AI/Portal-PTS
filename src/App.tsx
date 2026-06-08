@@ -240,6 +240,12 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
   // Keyboard accessibility helper for slide transitions
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Jangan cegah pengetikan di input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+
       if (activeModalId !== null) {
         if (e.key === 'Escape') {
           setActiveModalId(null);
