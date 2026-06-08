@@ -195,8 +195,20 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const data = await response.json();
-      const botResponse = data.choices?.[0]?.message?.content || 'Maaf, sistem tidak mengembalikan jawaban valid.';
+      const contentType = response.headers.get("content-type");
+      let botResponse = "";
+
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        botResponse = data.choices?.[0]?.message?.content || 'Maaf, sistem tidak mengembalikan jawaban valid.';
+      } else {
+        const textResp = await response.text();
+        if (textResp.includes("VOXIA Secure Proxy is Active")) {
+          throw new Error("Worker Anda saat ini hanya mengembalikan teks status. Silakan ganti kode Cloudflare Worker Anda dengan kode proxy Fireworks API lengkap yang tercantum pada instruksi chat ini.");
+        } else {
+          throw new Error(`Worker mengembalikan teks biasa (bukan JSON): "${textResp.substring(0, 100)}..."`);
+        }
+      }
       
       setChatMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
     } catch (err: any) {
