@@ -177,8 +177,12 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
         })
       });
 
-      // Jika /api/chat mengembalikan 404, coba fallback langsung ke root URL "/"
-      if (response.status === 404) {
+      // Cek apakah response 404 berasal dari worker (karena endpoint tidak ada) atau dari Fireworks (karena model error dsb)
+      let contentType = response.headers.get("content-type");
+      const isResponseJson = contentType && contentType.includes("application/json");
+
+      // Jika /api/chat mengembalikan 404 dan bukan JSON (berarti endpoint tidak ditemukan), coba fallback ke root URL "/"
+      if (response.status === 404 && !isResponseJson) {
         console.warn("Endpoint /api/chat tidak ditemukan (404). Menggunakan fallback ke root URL...");
         response = await fetch(cleanUrl, {
           method: 'POST',
@@ -189,13 +193,21 @@ Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia).
             messages: payloadMessages
           })
         });
+        
+        // Perbarui contentType setelah fallback
+        contentType = response.headers.get("content-type");
       }
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        if (contentType && contentType.includes("application/json")) {
+          const errData = await response.json();
+          throw new Error(errData.error || `HTTP ${response.status}`);
+        } else {
+          const errText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errText.substring(0, 100)}`);
+        }
       }
 
-      const contentType = response.headers.get("content-type");
       let botResponse = "";
 
       if (contentType && contentType.includes("application/json")) {
