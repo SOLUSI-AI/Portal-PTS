@@ -33,7 +33,10 @@ import {
   FileText,
   DollarSign,
   Undo2,
-  ListRestart
+  ListRestart,
+  MessageSquare,
+  Send,
+  Loader2
 } from 'lucide-react';
 import { getGeneralSlides, getProgramDetails } from './data';
 import { SlideItem, ProgramDetail, InstitutionConfig } from './types';
@@ -87,6 +90,128 @@ export default function App() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  // Chatbot State for Fireworks AI Cloudflare Worker integrations
+  const [workerUrl, setWorkerUrl] = useState<string>(() => {
+    return localStorage.getItem('vox_worker_url') || 'https://voxia-ai-campus.thebehavioralhacks.workers.dev';
+  });
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'assistant' | 'system'; content: string }>>([
+    {
+      role: 'assistant',
+      content: `Halo! Saya adalah VOXIA AI Campus Consultant. Saya siap membantu menyusun strategi PMB (Penerimaan Mahasiswa Baru) dan rencana taktis untuk kampus Anda. Silakan sampaikan pertanyaan Anda!`
+    }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll inside chat
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isChatOpen]);
+
+  // Persist proxy URL
+  useEffect(() => {
+    localStorage.setItem('vox_worker_url', workerUrl);
+  }, [workerUrl]);
+
+  const handleSendMessage = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || isChatLoading) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    
+    // Add message to state
+    const updatedMessages = [...chatMessages, { role: 'user', content: userMsg }];
+    setChatMessages(updatedMessages);
+    setIsChatLoading(true);
+
+    if (!workerUrl) {
+      setTimeout(() => {
+        setChatMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: '⚠️ Oops! Cloudflare Worker proxy URL belum dikonfigurasi. Silakan klik tombol roda gigi (⚙️) di panel chat ini, lalu masukkan URL Worker Anda agar asisten AI dapat memproses pesan Anda secara aman.'
+          }
+        ]);
+        setIsChatLoading(false);
+      }, 650);
+      return;
+    }
+
+    try {
+      // Build systemic context based on active presentation white-label properties
+      const systemPrompt = `You are "VOXIA AI Campus Consultant", an expert academic and business development strategist specialized in optimizing Private University (PTS) enrollment (Penerimaan Mahasiswa Baru/PMB) in Indonesia.
+The presentation tool is currently white-labeled for:
+- Institution Name: "${pts}"
+- City Location: "${city}"
+
+Core strategic chapters in discussion:
+1. Student Sandbox (RPL Program - early entry pathway for high school grads based on portfolios/videos, granting SKS credit exemptions of 3-6 SKS upon registration).
+2. Family Finance Literacy (countering dropout rates by encouraging household micro-stipends, visual budgeting, & avoiding high-interest online student loans / pinjol).
+3. Student-led Micro-Agency (empowering fresh undergraduates with professional gigs from Day 1 to build stellar portfolios and generate self-funded tuition under campus stewardship).
+
+Please reply in professional, warm, and strategic Indonesian (Bahasa Indonesia). Keep points structure highly clear, actionable, and specific to the Indonesian local context (Kemendikbud/Dikti). Encourage the user about how these plans will elevate PMB and student retention!`;
+
+      // Structure full payload compatible with OpenAI/Fireworks format (relayed safely by the cloudflare worker/proxy)
+      const payloadMessages = [
+        { role: 'system', content: systemPrompt },
+        ...updatedMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+      ];
+
+      const cleanUrl = workerUrl.trim().replace(/\/$/, "");
+
+      let response = await fetch(`${cleanUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: payloadMessages
+        })
+      });
+
+      // Jika /api/chat mengembalikan 404, coba fallback langsung ke root URL "/"
+      if (response.status === 404) {
+        console.warn("Endpoint /api/chat tidak ditemukan (404). Menggunakan fallback ke root URL...");
+        response = await fetch(cleanUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: payloadMessages
+          })
+        });
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botResponse = data.choices?.[0]?.message?.content || 'Maaf, sistem tidak mengembalikan jawaban valid.';
+      
+      setChatMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
+    } catch (err: any) {
+      console.error(err);
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `❌ Gagal memproses AI: ${err.message || err}. Pastikan Cloudflare Worker Anda aktif, mendukung CORS (akses lintas asal), dan isian URL Proxy sudah sesuai.`
+        }
+      ]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
 
   // Keyboard accessibility helper for slide transitions
   useEffect(() => {
@@ -1407,6 +1532,192 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* FLOATING GEMINI/FIREWORKS CHATBOT COMPONENT */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        
+        {/* Chat window panel */}
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+              className="w-[320px] sm:w-[380px] h-[480px] bg-[#0c0c14]/95 backdrop-blur-xl border border-zinc-850 rounded-3xl shadow-2xl flex flex-col overflow-hidden mb-4 mr-0 md:mr-2 text-left"
+            >
+              {/* Chat Header */}
+              <div className="p-4 bg-[#090910] border-b border-zinc-850/80 flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-indigo-500/10 rounded-xl border border-indigo-500/25 relative animate-pulse">
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-zinc-950" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-xs text-white uppercase tracking-wider">VOXIA CAMPUS CONSULTANT</h3>
+                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+                      <span>Sistem Cerdas VOXIA CAMPUS</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    id="btn-bot-config"
+                    onClick={() => setShowConfig(!showConfig)}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      showConfig ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+                    }`}
+                    title="Konfigurasi URL Worker Cloudflare"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+                  <button
+                    id="btn-close-bot-drawer"
+                    onClick={() => setIsChatOpen(false)}
+                    className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-zinc-900 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Cloudflare Configuration Panel */}
+              {showConfig && (
+                <div className="p-4 bg-[#08080f] border-b border-zinc-850/80 animate-slideDown text-[11px] text-slate-350 space-y-2">
+                  <p className="font-semibold text-white uppercase tracking-wider text-[10px] text-indigo-400">Hubungkan Cloudflare Worker:</p>
+                  <p className="leading-relaxed text-[10.5px]">Masukkan URL proxy Cloudflare Worker Anda agar asisten AI dapat memanggil Fireworks API secara aman.</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="https://voxia-proxy.username.workers.dev"
+                      value={workerUrl}
+                      onChange={(e) => setWorkerUrl(e.target.value)}
+                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                      id="worker-url-input-box"
+                      title="Isikan URL Worker Cloudflare"
+                    />
+                    <button
+                      id="btn-save-worker-ok"
+                      type="button"
+                      onClick={() => setShowConfig(false)}
+                      className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg cursor-pointer transition text-[10px] uppercase font-mono"
+                    >
+                      Ok
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-zinc-500">
+                    Belum punya Worker? Ikuti instruksi setup Cloudflare Worker & Fireworks AI yang tercantum pada instruksi chat developer kami.
+                  </p>
+                </div>
+              )}
+
+              {/* Chat Messages Block */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {chatMessages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-[12px] leading-relaxed font-normal whitespace-pre-line ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-br-none shadow-md'
+                          : 'bg-[#12121e]/85 border border-zinc-850/80 text-slate-200 rounded-bl-none shadow-sm'
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                
+                {isChatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-[#12121e]/85 border border-zinc-850/80 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2 text-xs text-zinc-400">
+                      <Loader2 className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
+                      <span>VOXIA AI sedang berpikir...</span>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Sample Prompts Tray */}
+              {chatMessages.length === 1 && (
+                <div className="px-4 py-2 bg-zinc-950/40 border-t border-zinc-850/60 text-left shrink-0">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 font-mono tracking-wider block mb-1.5">Pertanyaan Rekomendasi:</span>
+                  <div className="flex flex-col gap-1.5">
+                    {[
+                      `Bagaimana program ini meningkatkan PMB di ${pts}?`,
+                      `Jelaskan tentang konsep Micro-Agency di deck ini.`,
+                      `Seberapa realistis target ROI kuantitatif bagi pimpinan?`
+                    ].map((promptText, i) => (
+                      <button
+                        key={i}
+                        id={`prompt-rec-${i}`}
+                        type="button"
+                        onClick={() => setChatInput(promptText)}
+                        className="text-left text-[11px] text-indigo-400/90 hover:text-indigo-300 font-medium cursor-pointer truncate transition-colors duration-200"
+                        title={promptText}
+                      >
+                        &bull; {promptText}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Form Input Message */}
+              <form
+                id="form-bot-chat"
+                onSubmit={handleSendMessage}
+                className="p-3 bg-[#08080f] border-t border-zinc-850/80 flex gap-2 shrink-0"
+              >
+                <input
+                  type="text"
+                  placeholder={workerUrl ? "Tanya asisten akademik..." : "Klik tombol ⚙️ untuk isi URL Worker..."}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  className="flex-1 bg-[#101018]/90 border border-zinc-850 text-xs px-3 py-2 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/80"
+                  id="chat-input-text-bar"
+                  title="Tulis pesan"
+                />
+                <button
+                  type="submit"
+                  id="btn-submit-chat"
+                  disabled={!chatInput.trim() || isChatLoading}
+                  className="p-2 ml-1 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 transition-all rounded-xl disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer text-white"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Floating Bubble Circle Trigger Button */}
+        <button
+          id="btn-bot-floating-bubble"
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className="p-4 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 group border border-indigo-400/25 cursor-pointer relative"
+          aria-label="Buka obrolan asisten AI"
+        >
+          <div className="relative">
+            {isChatOpen ? (
+              <X className="w-6 h-6 animate-fadeIn" />
+            ) : (
+              <>
+                <MessageSquare className="w-6 h-6 animate-fadeIn" />
+                <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-emerald-500 rounded-full border border-zinc-950 animate-ping" />
+                <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-emerald-500 rounded-full border border-zinc-950" />
+              </>
+            )}
+          </div>
+        </button>
+
+      </div>
+
     </div>
   );
 }
+
